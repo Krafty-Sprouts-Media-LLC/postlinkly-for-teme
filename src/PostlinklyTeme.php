@@ -14,6 +14,8 @@ declare(strict_types=1);
 
 namespace Postlinkly\Teme;
 
+use Postlinkly\Extension\Filters;
+use Postlinkly\Teme\Engine\SettingsFilters;
 use Postlinkly\Teme\Index\Indexer;
 use Postlinkly\Teme\Jobs\IndexSite;
 use Postlinkly\Teme\Storage\ItemIndex;
@@ -31,6 +33,7 @@ use Teme\Contracts\Hooks\Hooks;
 use Teme\Contracts\Jobs\JobHandler;
 use Teme\Contracts\Jobs\PluginHasJobs;
 use Teme\Contracts\Plugins\Plugin;
+use Teme\Contracts\Settings\SettingsReader;
 
 /**
  * Postlinkly for Teme: suggests internal links in the editor.
@@ -56,14 +59,22 @@ final class PostlinklyTeme implements HasEditorPanels, Plugin, PluginHasJobs
     private readonly Indexer $indexer;
 
     /**
+     * Builds the plugin's parts, and routes the core engine's named filters
+     * to the plugin's settings before anything can run one.
+     *
      * @since 1.0.0
      *
      * @param  ContentReader  $reader  Reads published items and drafts.
+     * @param  SettingsReader  $settings  Reads the plugin's settings.
      */
-    public function __construct(private readonly ContentReader $reader)
-    {
+    public function __construct(
+        private readonly ContentReader $reader,
+        private readonly SettingsReader $settings,
+    ) {
         $this->index = new ItemIndex;
         $this->indexer = new Indexer($reader, $this->index);
+
+        Filters::set_provider(new SettingsFilters($settings));
     }
 
     /**

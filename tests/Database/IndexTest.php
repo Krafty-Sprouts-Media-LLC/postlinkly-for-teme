@@ -22,6 +22,7 @@ use Postlinkly\Teme\Tests\Support\Documents as D;
 use Postlinkly\Teme\Tests\Support\FakeContentReader;
 use Postlinkly\Teme\Tests\Support\FakeHooks;
 use Postlinkly\Teme\Tests\Support\FakeJobContext;
+use Postlinkly\Teme\Tests\Support\FakeSettingsReader;
 use Teme\Contracts\Content\ContentDeleted;
 use Teme\Contracts\Content\ContentPublished;
 use Teme\Contracts\Content\ContentRestored;
@@ -44,7 +45,7 @@ function site(): array
 {
     $reader = new FakeContentReader;
     $hooks = new FakeHooks;
-    $plugin = new PostlinklyTeme($reader);
+    $plugin = new PostlinklyTeme($reader, new FakeSettingsReader);
     $plugin->register($hooks);
 
     return [$reader, $hooks, $plugin];
