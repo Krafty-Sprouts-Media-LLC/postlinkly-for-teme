@@ -158,7 +158,10 @@ final readonly class DocumentText
         $code = in_array('code', $marks, true);
         $counted = ! $linked && ! $code;
 
-        $state['runs'][] = new TextRun($text, $counted, $counted && $paragraph >= 0 && ! $inCode, $inCode ? -1 : $paragraph);
+        $inParagraph = $paragraph >= 0 && ! $inCode;
+        $offset = $inParagraph ? mb_strlen($state['plain'][$paragraph]) : -1;
+
+        $state['runs'][] = new TextRun($text, $counted, $counted && $inParagraph, $inParagraph ? $paragraph : -1, $offset);
 
         if ($code) {
             // Inline code is dropped, and leaves a line break so the words
