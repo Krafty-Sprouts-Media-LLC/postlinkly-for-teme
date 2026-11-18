@@ -29,6 +29,9 @@ use Postlinkly\Text\TextExtractor;
  *   code left out: what the item offers as a link target.
  * - `runs` are the text nodes, used to place a link where Teme's editor will
  *   put it ({@see TextRun}).
+ * - `linked` are the items the article already links to, so they aren't
+ *   suggested again. The editor stores an internal link as
+ *   `teme:content/<item ID>`, never as an address.
  *
  * Paragraphs are numbered in document order at any depth, so the paragraph
  * inside a list item, a quote or a table cell counts as one.
@@ -44,12 +47,14 @@ final readonly class DocumentText
      * @param  string  $fullText  Every word a reader sees, code left out.
      * @param  list<TextRun>  $runs  Every text node, in document order.
      * @param  array<int, string>  $paragraphs  Each non-blank paragraph's text, unfenced, by index.
+     * @param  list<string>  $linked  Item IDs the article links to, each once, in order.
      */
     private function __construct(
         public string $engineText,
         public string $fullText,
         public array $runs,
         public array $paragraphs,
+        public array $linked,
     ) {}
 
     /**
@@ -67,6 +72,7 @@ final readonly class DocumentText
             'plain' => [],
             'full' => [],
             'runs' => [],
+            'linked' => [],
         ];
 
         self::walk($document, $state, -1, false);
@@ -88,6 +94,7 @@ final readonly class DocumentText
             trim(implode('', $state['full'])),
             $state['runs'],
             $paragraphs,
+            array_keys($state['linked']),
         );
     }
 
@@ -158,6 +165,11 @@ final readonly class DocumentText
         $code = in_array('code', $marks, true);
         $counted = ! $linked && ! $code;
 
+        $target = self::linkTarget($node);
+        if ($target !== null) {
+            $state['linked'][$target] = true;
+        }
+
         $inParagraph = $paragraph >= 0 && ! $inCode;
         $offset = $inParagraph ? mb_strlen($state['plain'][$paragraph]) : -1;
 
@@ -214,6 +226,24 @@ final readonly class DocumentText
         }
 
         return $types;
+    }
+
+    /**
+     * The item an internal link on this node points to, or null.
+     *
+     * @param  array<mixed>  $node  A text node.
+     */
+    private static function linkTarget(array $node): ?string
+    {
+        foreach (is_array($node['marks'] ?? null) ? $node['marks'] : [] as $mark) {
+            $href = is_array($mark) && ($mark['type'] ?? null) === 'link' && is_array($mark['attrs'] ?? null) ? ($mark['attrs']['href'] ?? null) : null;
+
+            if (is_string($href) && preg_match('#^teme:content/([0-9A-Za-z]{26})(?:\#.*)?$#D', $href, $match) === 1) {
+                return $match[1];
+            }
+        }
+
+        return null;
     }
 
     /**

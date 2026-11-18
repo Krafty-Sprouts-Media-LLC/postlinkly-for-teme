@@ -38,6 +38,23 @@ first listed. "Unverified" means not yet reproduced on the dev site (plan Task
 - **Did instead:** installed the plugin through Composer, the guide's other
   route, so `postlinkly/core` is in the site's `vendor/` (DECISIONS D5).
 
+### H3. An editor-panel action's payload keys aren't all named
+- **Expected:** the editor-panels guide to name every key of the payload an
+  action's job receives. It says the payload "holds the panel, the action,
+  the item's ID, the revision the person saw, and the form's values", but
+  shows only `itemId`.
+- **Did instead:** Find links reads only `itemId`, and takes the revision
+  from the draft it reads (`ItemSnapshot::$revisionId`), which is the one its
+  suggestions must be placed for anyway.
+
+### H4. A suggestion's id must be lower case, but Teme's item IDs are upper case
+- **Expected:** to use a target's item ID in a suggestion's id. The guide
+  says an id is "unique in the view"; only the contract's
+  `Suggestion::ID` pattern (`^[a-z0-9][a-z0-9:._-]{0,63}$`) shows it must be
+  lower case, while item IDs (ULIDs) are upper case.
+- **Did instead:** ids are `link-` and the lower-cased target ID; the target
+  ID is kept separately.
+
 ## Walls
 
 ### W1. A link suggestion can't check that its place is still right (G5, #540)

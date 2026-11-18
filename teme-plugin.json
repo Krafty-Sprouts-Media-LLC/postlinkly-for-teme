@@ -23,7 +23,8 @@
         "ContentVisibilityChanged"
     ],
     "jobs": [
-        {"key": "index-site", "label": "Read the site for link suggestions", "long": true, "tries": 1}
+        {"key": "index-site", "label": "Read the site for link suggestions", "long": true, "tries": 1},
+        {"key": "find-links", "label": "Find link suggestions", "tries": 1}
     ],
     "schedules": [
         {"job": "index-site", "every": "hour"}
@@ -32,6 +33,16 @@
         "tables": ["postlinkly_items", "postlinkly_stems", "postlinkly_suggestions"]
     },
     "contributes": {
+        "editorPanels": [
+            {
+                "id": "links",
+                "label": "Link suggestions",
+                "description": "Suggests links to your published articles, using words already in your text.",
+                "icon": "link",
+                "types": ["post", "page"],
+                "actions": [{"id": "find", "label": "Find links", "job": "find-links"}]
+            }
+        ],
         "settings": [
             {
                 "key": "max_suggestions",

@@ -15,10 +15,16 @@ declare(strict_types=1);
 namespace Postlinkly\Teme;
 
 use Postlinkly\Extension\Filters;
+use Postlinkly\Teme\Document\DocumentText;
+use Postlinkly\Teme\Engine\EngineFactory;
 use Postlinkly\Teme\Engine\SettingsFilters;
 use Postlinkly\Teme\Index\Indexer;
+use Postlinkly\Teme\Jobs\FindLinks;
 use Postlinkly\Teme\Jobs\IndexSite;
+use Postlinkly\Teme\Links\LinkLocator;
+use Postlinkly\Teme\Panels\LinksPanel;
 use Postlinkly\Teme\Storage\ItemIndex;
+use Postlinkly\Teme\Storage\SuggestionStore;
 use Teme\Contracts\Content\ContentDeleted;
 use Teme\Contracts\Content\ContentPublished;
 use Teme\Contracts\Content\ContentReader;
@@ -27,6 +33,7 @@ use Teme\Contracts\Content\ContentSaved;
 use Teme\Contracts\Content\ContentTrashed;
 use Teme\Contracts\Content\ContentUnpublished;
 use Teme\Contracts\Content\ContentVisibilityChanged;
+use Teme\Contracts\Content\ReadRefused;
 use Teme\Contracts\Editor\EditorPanel;
 use Teme\Contracts\Editor\HasEditorPanels;
 use Teme\Contracts\Hooks\Hooks;
@@ -58,6 +65,10 @@ final class PostlinklyTeme implements HasEditorPanels, Plugin, PluginHasJobs
 
     private readonly Indexer $indexer;
 
+    private readonly SuggestionStore $suggestions;
+
+    private readonly LinkLocator $locator;
+
     /**
      * Builds the plugin's parts, and routes the core engine's named filters
      * to the plugin's settings before anything can run one.
@@ -73,6 +84,8 @@ final class PostlinklyTeme implements HasEditorPanels, Plugin, PluginHasJobs
     ) {
         $this->index = new ItemIndex;
         $this->indexer = new Indexer($reader, $this->index);
+        $this->suggestions = new SuggestionStore;
+        $this->locator = new LinkLocator;
 
         Filters::set_provider(new SettingsFilters($settings));
     }
@@ -89,11 +102,17 @@ final class PostlinklyTeme implements HasEditorPanels, Plugin, PluginHasJobs
     {
         $hooks->on(ContentPublished::class, fn (ContentPublished $hook) => $this->indexer->published($hook->item, $hook->actorId));
         $hooks->on(ContentRestored::class, fn (ContentRestored $hook) => $this->indexer->published($hook->item, $hook->actorId));
-        $hooks->on(ContentSaved::class, fn (ContentSaved $hook) => $this->indexer->saved($hook->item, $hook->actorId));
+        $hooks->on(ContentSaved::class, function (ContentSaved $hook): void {
+            $this->indexer->saved($hook->item, $hook->actorId);
+            $this->placeWaitingAgain($hook->item->id, $hook->actorId);
+        });
         $hooks->on(ContentUnpublished::class, fn (ContentUnpublished $hook) => $this->indexer->withdraw($hook->item->id));
         $hooks->on(ContentTrashed::class, fn (ContentTrashed $hook) => $this->indexer->withdraw($hook->item->id));
         $hooks->on(ContentVisibilityChanged::class, fn (ContentVisibilityChanged $hook) => $this->indexer->visibilityChanged($hook->item, $hook->to, $hook->actorId));
-        $hooks->on(ContentDeleted::class, fn (ContentDeleted $hook) => $this->indexer->deleted($hook->id));
+        $hooks->on(ContentDeleted::class, function (ContentDeleted $hook): void {
+            $this->indexer->deleted($hook->id);
+            $this->suggestions->forget($hook->id);
+        });
     }
 
     /**
@@ -105,7 +124,9 @@ final class PostlinklyTeme implements HasEditorPanels, Plugin, PluginHasJobs
      */
     public function editorPanels(): array
     {
-        return [];
+        return [
+            LinksPanel::ID => new LinksPanel($this->suggestions, $this->index),
+        ];
     }
 
     /**
@@ -119,6 +140,27 @@ final class PostlinklyTeme implements HasEditorPanels, Plugin, PluginHasJobs
     {
         return [
             'index-site' => new IndexSite($this->reader, $this->indexer, $this->index),
+            'find-links' => new FindLinks($this->reader, $this->index, new EngineFactory($this->index), $this->suggestions, $this->locator, $this->settings),
         ];
+    }
+
+    /**
+     * After a save, moves an article's waiting suggestions to the new
+     * revision, or drops the ones that can no longer be placed. Needs the
+     * person who saved, to read the draft as them.
+     */
+    private function placeWaitingAgain(string $itemId, ?string $personId): void
+    {
+        if ($personId === null || ! $this->suggestions->hasWaiting($itemId)) {
+            return;
+        }
+
+        try {
+            $snapshot = $this->reader->draft($itemId, $personId);
+        } catch (ReadRefused) {
+            return;
+        }
+
+        $this->suggestions->placeAgain($itemId, $snapshot->revisionId, DocumentText::read($snapshot->body), $this->locator);
     }
 }

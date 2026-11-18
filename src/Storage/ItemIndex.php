@@ -203,6 +203,16 @@ final class ItemIndex
     }
 
     /**
+     * Whether any link target in a language has been heard of yet.
+     *
+     * @since 1.0.0
+     */
+    public function hasPublicIn(string $language): bool
+    {
+        return DB::table(self::TABLE)->where('language', $language)->where('public', true)->exists();
+    }
+
+    /**
      * Link targets whose words need reading again, oldest first.
      *
      * @since 1.0.0

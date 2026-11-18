@@ -103,6 +103,15 @@ it('keeps headings and link words in the full text, but not code', function (): 
         ->and($text->fullText)->not->toContain('npm run');
 });
 
+it('lists the items the article already links to', function (): void {
+    $text = DocumentText::read(D::doc(
+        D::paragraph('See ', ['link' => 'our guide', 'to' => LINKED_ID], ' and ', ['link' => 'the guide', 'to' => LINKED_ID], '.'),
+        D::paragraph(['link' => 'other', 'to' => '01JD0000000000000000000009']),
+    ));
+
+    expect($text->linked)->toBe([LINKED_ID, '01JD0000000000000000000009']);
+});
+
 it('reads anything that is not a document as empty', function (array $notADocument): void {
     $text = DocumentText::read($notADocument);
 
