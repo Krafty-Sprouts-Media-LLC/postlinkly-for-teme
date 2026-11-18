@@ -7,6 +7,7 @@
  *              can load the site's tests/Pest.php instead of this one.
  *
  * @package Postlinkly
+ *
  * @since   1.0.0
  */
 

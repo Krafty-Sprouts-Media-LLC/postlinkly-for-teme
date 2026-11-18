@@ -62,8 +62,14 @@ From this folder, with the dev site's tools:
 
 ```powershell
 $env:PGCONNECT_TIMEOUT = '5'
-C:\Users\kings\Herd\postlinkly-teme\vendor\bin\pest --configuration=phpunit.xml
+php C:\Users\kings\Herd\postlinkly-teme\vendor\bin\pest --configuration=phpunit.xml
+php C:\Users\kings\Herd\postlinkly-teme\vendor\bin\pint --config pint.json --test src tests database
+php -d memory_limit=1G C:\Users\kings\Herd\postlinkly-teme\vendor\bin\phpstan analyse -c phpstan.neon --no-progress
 ```
+
+Each test file names its base class with `uses()`: the site's Pest can load
+the site's own `tests/Pest.php` instead of this package's. `pint.json` is
+schedulely's (Laravel preset, keeping the `@package` header).
 
 - **Unit** tests need nothing.
 - **Database** tests use the dev site's `postgres_test` container (port 5453)

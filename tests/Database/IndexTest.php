@@ -5,6 +5,7 @@
  * Description: Tests for the site index and its tables.
  *
  * @package Postlinkly
+ *
  * @since   1.0.0
  */
 

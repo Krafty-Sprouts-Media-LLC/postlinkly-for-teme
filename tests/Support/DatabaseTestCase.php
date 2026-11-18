@@ -6,6 +6,7 @@
  *              with the real migration, in a database of their own.
  *
  * @package Postlinkly
+ *
  * @since   1.0.0
  */
 
@@ -70,7 +71,7 @@ abstract class DatabaseTestCase extends TestCase
      */
     private static function boot(): void
     {
-        $app = new Container();
+        $app = new Container;
         Container::setInstance($app);
         Facade::setFacadeApplication($app);
 
@@ -81,7 +82,7 @@ abstract class DatabaseTestCase extends TestCase
         $capsule->setAsGlobal();
 
         $exists = $capsule->getConnection('admin')->selectOne('select 1 as found from pg_database where datname = ?', [$database]);
-        if (null === $exists) {
+        if ($exists === null) {
             // The name comes from this file or the tester's environment, never
             // from data, and PostgreSQL can't bind an identifier, so it is quoted.
             $capsule->getConnection('admin')->statement('create database "'.str_replace('"', '', $database).'"');

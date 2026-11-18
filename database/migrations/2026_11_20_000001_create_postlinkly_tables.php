@@ -6,6 +6,7 @@
  *              counts per language, and the suggestions waiting in the editor.
  *
  * @package Postlinkly
+ *
  * @since   1.0.0
  */
 
