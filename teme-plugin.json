@@ -22,6 +22,12 @@
         "ContentDeleted",
         "ContentVisibilityChanged"
     ],
+    "jobs": [
+        {"key": "index-site", "label": "Read the site for link suggestions", "long": true, "tries": 1}
+    ],
+    "schedules": [
+        {"job": "index-site", "every": "hour"}
+    ],
     "owns": {
         "tables": ["postlinkly_items", "postlinkly_stems", "postlinkly_suggestions"]
     },
@@ -53,6 +59,9 @@
                 "description": "Words that should never count as a reason to link, one per line. Common words like \"the\" are already ignored in each language.",
                 "default": ""
             }
+        ],
+        "actions": [
+            {"id": "read-site", "label": "Read the whole site again", "description": "Re-reads every published article for link suggestions. Use it after a large import.", "job": "index-site"}
         ]
     }
 }
