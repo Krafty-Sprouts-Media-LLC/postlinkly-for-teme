@@ -16,10 +16,16 @@
 
  .PARAMETER Seconds
   The most each artisan call may take.
+
+ .PARAMETER As
+  The email of the site administrator the plugin's scheduled work runs as. Teme won't enable a
+  plugin with schedules from the command line without one. When given, the plugin is disabled
+  first, so it is enabled again as that person.
 #>
 param(
     [string] $Site = 'C:\Users\kings\Herd\postlinkly-teme',
-    [int] $Seconds = 120
+    [int] $Seconds = 120,
+    [string] $As = ''
 )
 
 $ErrorActionPreference = 'Stop'
@@ -49,7 +55,14 @@ function Ask([string] $Php) {
 }
 
 Step 'Plugin is found' @('teme:plugins')
-Step 'Enable (agrees to what the manifest asks for)' @('teme:plugins:enable', 'postlinkly/teme', '--agree')
+
+if ($As -eq '') {
+    throw 'Postlinkly runs work on a schedule: pass -As with the email of a site administrator.'
+}
+
+# Disabling first may fail when the plugin isn't enabled yet; that's fine.
+$null = Artisan @('teme:plugins:disable', 'postlinkly/teme')
+Step 'Enable as the administrator its schedules run as' @('teme:plugins:enable', 'postlinkly/teme', '--agree', "--as=$As")
 Step 'Run waiting database changes' @('teme:plugins:migrate', 'postlinkly/teme')
 
 Write-Host '== Tables exist'
