@@ -1,0 +1,58 @@
+{
+    "manifest": 1,
+    "name": "postlinkly/teme",
+    "code": "postlinkly",
+    "label": "Postlinkly",
+    "description": "Suggests internal links to your published articles while you write, using words already in your text. You choose which links to add.",
+    "version": "1.0.0",
+    "requires": {
+        "teme": "^1.0"
+    },
+    "plugin": "Postlinkly\\Teme\\PostlinklyTeme",
+    "license": "GPL-2.0-or-later",
+    "author": "Krafty Sprouts Media, LLC",
+    "homepage": "https://kraftysprouts.com/portfolio/postlinkly/",
+    "capabilities": ["content.read", "jobs"],
+    "hooks": [
+        "ContentSaved",
+        "ContentPublished",
+        "ContentUnpublished",
+        "ContentTrashed",
+        "ContentRestored",
+        "ContentDeleted",
+        "ContentVisibilityChanged"
+    ],
+    "owns": {
+        "tables": ["postlinkly_items", "postlinkly_stems", "postlinkly_suggestions"]
+    },
+    "contributes": {
+        "settings": [
+            {
+                "key": "max_suggestions",
+                "type": "number",
+                "label": "Suggestions at a time",
+                "description": "The most link suggestions Find links offers for one article.",
+                "default": 10,
+                "min": 1,
+                "max": 20
+            },
+            {
+                "key": "skip_paragraphs",
+                "type": "number",
+                "label": "Paragraphs to leave alone",
+                "description": "How many paragraphs at the start of an article never get a suggested link.",
+                "default": 0,
+                "min": 0,
+                "max": 10,
+                "unit": "paragraphs"
+            },
+            {
+                "key": "ignore_words",
+                "type": "textarea",
+                "label": "Words to ignore",
+                "description": "Words that should never count as a reason to link, one per line. Common words like \"the\" are already ignored in each language.",
+                "default": ""
+            }
+        ]
+    }
+}

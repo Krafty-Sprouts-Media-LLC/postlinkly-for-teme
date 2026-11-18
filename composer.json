@@ -1,0 +1,16 @@
+{
+    "name": "postlinkly/teme",
+    "description": "Postlinkly for TemeCMS: internal link suggestions in the editor, from the words already in your text.",
+    "type": "teme-plugin",
+    "license": "GPL-2.0-or-later",
+    "require": {
+        "php": "^8.4",
+        "teme/contracts": "*",
+        "postlinkly/core": "^1.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Postlinkly\\Teme\\": "src/"
+        }
+    }
+}
