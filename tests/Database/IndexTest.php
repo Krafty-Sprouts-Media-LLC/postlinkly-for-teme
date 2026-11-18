@@ -62,8 +62,13 @@ function published(ItemRef $item, ?string $actor = EDITOR): ContentPublished
  */
 function storedStems(string $language = 'en'): array
 {
-    return DB::table('postlinkly_stems')->where('language', $language)->where('doc_count', '>', 0)
+    $stems = DB::table('postlinkly_stems')->where('language', $language)->where('doc_count', '>', 0)
         ->pluck('doc_count', 'stem')->map(static fn ($count): int => (int) $count)->all();
+
+    // Rows come back in no set order; compare by stem.
+    ksort($stems);
+
+    return $stems;
 }
 
 /**
